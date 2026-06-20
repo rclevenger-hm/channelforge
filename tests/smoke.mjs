@@ -23,7 +23,10 @@ function assert(condition, message) {
 assert(files.html.includes("client.js"), "index should load client.js");
 assert(files.packageJson.scripts?.start === "node app.js", "start script should run the server entry");
 assert(files.packageJson.scripts?.desktop === "electron .", "desktop script should run Electron");
-assert(files.packageJson.scripts?.dist === "electron-builder", "dist script should package desktop builds");
+assert(files.packageJson.scripts?.dist === "electron-builder --publish never", "dist script should package desktop builds without publishing");
+assert(files.packageJson.scripts?.["dist:linux"]?.includes("--publish never"), "Linux desktop build should not publish from electron-builder");
+assert(files.packageJson.scripts?.["dist:mac"]?.includes("--publish never"), "macOS desktop build should not publish from electron-builder");
+assert(files.packageJson.scripts?.["dist:win"]?.includes("--publish never"), "Windows desktop build should not publish from electron-builder");
 assert(files.packageJson.scripts?.["tv:package"] === "node scripts/build-tv-packages.mjs", "tv package script should generate TV app folders");
 assert(files.packageJson.devDependencies?.electron, "Electron should be available for desktop app builds");
 assert(files.packageJson.devDependencies?.["electron-builder"], "electron-builder should be available for installers");
