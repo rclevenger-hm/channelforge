@@ -11,7 +11,8 @@
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
     "start": "node app.js",
-    "test": "node --check client.js && node --check app.js && node --check electron/main.cjs && node tests/smoke.mjs"
+    "test": "node --check client.js && node --check app.js && node --check electron/main.cjs && node --check scripts/build-tv-packages.mjs && node tests/smoke.mjs",
+    "tv:package": "node scripts/build-tv-packages.mjs"
   },
   "engines": {
     "node": ">=18"

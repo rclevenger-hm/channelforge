@@ -1,0 +1,30 @@
+.tv-runtime {
+  overscroll-behavior: none;
+}
+
+.tv-runtime .shell {
+  width: min(1760px, calc(100vw - 72px));
+  padding: 36px 0;
+}
+
+.tv-runtime button,
+.tv-runtime input,
+.tv-runtime select,
+.tv-runtime textarea,
+.tv-runtime [role="button"],
+.tv-runtime video {
+  outline-offset: 4px;
+}
+
+.tv-runtime button:focus-visible,
+.tv-runtime input:focus-visible,
+.tv-runtime select:focus-visible,
+.tv-runtime textarea:focus-visible,
+.tv-runtime [role="button"]:focus-visible,
+.tv-runtime video:focus-visible {
+  outline: 4px solid #ffd37a;
+}
+
+.tv-runtime .player-grid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(420px, 0.8fr);
+}
