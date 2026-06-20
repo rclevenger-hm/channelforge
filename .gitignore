@@ -3,3 +3,4 @@ npm-debug.log*
 .env
 .env.*
 dist-tv/
+tv-package-test-output/

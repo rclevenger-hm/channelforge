@@ -1,15 +1,28 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { setTimeout as wait } from "node:timers/promises";
 
 const root = process.cwd();
-const outDir = join(root, "dist-tv");
+const outDir = process.env.CHANNELFORGE_TV_OUTDIR || join(root, "dist-tv");
 const sharedFiles = ["channel-forge-icon.svg", "client.js", "styles.css"];
 
-await rm(outDir, { force: true, recursive: true });
+await removeExistingOutput(outDir);
 await buildSamsungTizen();
 await buildLgWebOs();
 
-console.log("TV packages generated in dist-tv/");
+console.log(`TV packages generated in ${outDir}`);
+
+async function removeExistingOutput(target) {
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      await rm(target, { force: true, recursive: true });
+      return;
+    } catch (error) {
+      if (attempt === 4 || !["EBUSY", "ENOTEMPTY", "EPERM"].includes(error.code)) throw error;
+      await wait(250 * attempt);
+    }
+  }
+}
 
 async function buildSamsungTizen() {
   const target = join(outDir, "samsung-tizen");

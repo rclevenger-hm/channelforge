@@ -32,10 +32,12 @@ assert(files.server.includes("/healthz"), "server should expose health endpoint"
 assert(files.electronMain.includes("BrowserWindow"), "Electron entry should create a desktop window");
 assert(files.electronMain.includes("nodeIntegration: false"), "Electron entry should disable nodeIntegration");
 assert(files.desktopWorkflow.includes("windows-latest") && files.desktopWorkflow.includes("macos-latest"), "desktop workflow should build Windows and macOS artifacts");
+assert(files.desktopWorkflow.includes("branches:") && files.desktopWorkflow.includes("- main"), "desktop workflow should run on main pushes");
 assert(files.tvBuilder.includes("samsung-tizen") && files.tvBuilder.includes("lg-webos"), "TV builder should generate Samsung and LG packages");
 assert(files.tvRemote.includes("ArrowRight") && files.tvRemote.includes("ArrowDown"), "TV remote helper should support directional navigation");
 assert(files.tvCss.includes(".tv-runtime"), "TV CSS should include TV runtime focus styling");
 assert(files.tvWorkflow.includes("npm run tv:package"), "TV workflow should generate TV packages");
+assert(files.tvWorkflow.includes("branches:") && files.tvWorkflow.includes("- main"), "TV workflow should run on main pushes");
 assert(files.tvReadme.includes("Samsung Tizen") && files.tvReadme.includes("LG webOS"), "TV README should document Samsung and LG targets");
 assert(files.client.includes("playlistUrl"), "client should support user-provided playlist URLs");
 assert(files.client.includes("playlistText"), "client should support pasted M3U text");
