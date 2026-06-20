@@ -36,6 +36,8 @@ assert(files.electronMain.includes("BrowserWindow"), "Electron entry should crea
 assert(files.electronMain.includes("nodeIntegration: false"), "Electron entry should disable nodeIntegration");
 assert(files.desktopWorkflow.includes("windows-latest") && files.desktopWorkflow.includes("macos-latest"), "desktop workflow should build Windows and macOS artifacts");
 assert(files.desktopWorkflow.includes("branches:") && files.desktopWorkflow.includes("- main"), "desktop workflow should run on main pushes");
+assert(files.desktopWorkflow.includes("GH_TOKEN: ${{ github.token }}"), "desktop workflow should pass the built-in token to Electron Builder");
+assert(files.desktopWorkflow.includes("release-assets/*.AppImage") && files.desktopWorkflow.includes("release-assets/*.dmg"), "desktop release workflow should upload installer package globs");
 assert(files.tvBuilder.includes("samsung-tizen") && files.tvBuilder.includes("lg-webos"), "TV builder should generate Samsung and LG packages");
 assert(files.tvRemote.includes("ArrowRight") && files.tvRemote.includes("ArrowDown"), "TV remote helper should support directional navigation");
 assert(files.tvCss.includes(".tv-runtime"), "TV CSS should include TV runtime focus styling");
