@@ -1,0 +1,14 @@
+{
+  "name": "channelforge",
+  "version": "1.0.0",
+  "private": false,
+  "description": "A browser-based IPTV playlist player for user-provided legal M3U sources.",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --check client.js && node --check app.js && node tests/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

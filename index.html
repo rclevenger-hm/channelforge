@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChannelForge</title>
+    <link rel="icon" href="./channel-forge-icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="toolbar">
+        <div class="brand">
+          <img src="./channel-forge-icon.svg" alt="" />
+          <div>
+            <h1>ChannelForge</h1>
+            <p>Bring your own legal M3U playlist.</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="favoritesOnly" type="button" aria-pressed="false">Favorites</button>
+          <button id="clearData" type="button">Clear</button>
+        </div>
+      </section>
+
+      <section class="source-panel">
+        <form id="sourceForm">
+          <label>
+            Playlist URL
+            <input id="playlistUrl" type="url" placeholder="https://example.com/playlist.m3u" autocomplete="off" />
+          </label>
+          <label>
+            Or paste M3U text
+            <textarea id="playlistText" rows="5" placeholder="#EXTM3U"></textarea>
+          </label>
+          <button type="submit">Load Playlist</button>
+        </form>
+        <p class="note">ChannelForge does not include or endorse any default streams. Use sources you have rights to access.</p>
+      </section>
+
+      <section class="player-grid">
+        <article class="player-card">
+          <video id="videoPlayer" controls playsinline></video>
+          <div id="emptyPlayer" class="empty-player">Select a channel</div>
+          <div class="now-playing">
+            <span>Now playing</span>
+            <strong id="nowPlaying">Nothing selected</strong>
+          </div>
+        </article>
+
+        <aside class="browser">
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="Search channels..." />
+            <select id="groupFilter">
+              <option value="all">All groups</option>
+            </select>
+          </div>
+          <div class="browser-heading">
+            <strong>Channel Browser</strong>
+            <span id="visibleCount">No channels loaded</span>
+          </div>
+          <div id="channelList" class="channel-list" role="list"></div>
+        </aside>
+      </section>
+    </main>
+
+    <template id="channelTemplate">
+      <div class="channel-row" role="button" tabindex="0">
+        <span class="channel-logo" aria-hidden="true"></span>
+        <span class="channel-copy">
+          <strong></strong>
+          <small></small>
+        </span>
+        <button class="favorite-star" type="button" aria-label="Add to favorites" title="Add to favorites">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 3.5 2.6 5.3 5.9.8-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.8L12 3.5Z" />
+          </svg>
+        </button>
+      </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
+    <script src="./client.js" type="module"></script>
+  </body>
+</html>

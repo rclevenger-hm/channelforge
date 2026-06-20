@@ -1,0 +1,46 @@
+# ChannelForge
+
+ChannelForge is a lightweight browser IPTV player for user-provided legal M3U playlists.
+
+This public edition intentionally ships without bundled playlist sources, scraper integrations, provider-specific endpoints, login gates, or stream-discovery tooling. It is meant to be a clean player shell for playlists you own or are authorized to access.
+
+## Run Locally
+
+```powershell
+npm start
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173
+```
+
+## Docker
+
+```powershell
+docker build -t channelforge .
+docker run --rm -p 5173:5173 channelforge
+```
+
+## Test
+
+```powershell
+npm test
+```
+
+## Features
+
+- Load a CORS-accessible M3U playlist URL.
+- Paste raw M3U text directly into the app.
+- Parse channel name, group, logo, and stream URL from standard `#EXTINF` entries.
+- Deduplicate channels by stream URL.
+- Search and filter by group.
+- Play direct video URLs and HLS streams with HLS.js when needed.
+- Store loaded channels and favorites locally in the browser.
+
+## Legal
+
+ChannelForge does not provide, host, endorse, verify, or redistribute any channels, streams, playlists, or media. Users are responsible for ensuring they have the right to access any playlist or stream they load.
+
+Do not use ChannelForge to access copyrighted, paid, geo-restricted, DRM-protected, or otherwise unauthorized content.

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">ChannelForge icon</title>
+  <desc id="desc">A forged ChannelForge app mark with a channel grid, play symbol, and teal signal glow.</desc>
+  <defs>
+    <linearGradient id="bg" x1="32" x2="224" y1="20" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a2733"/>
+      <stop offset="0.56" stop-color="#0b121b"/>
+      <stop offset="1" stop-color="#04070d"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="54" x2="203" y1="55" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b7fff5"/>
+      <stop offset="0.46" stop-color="#40e0b7"/>
+      <stop offset="1" stop-color="#178f78"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+  <path d="M54 67c0-8 6-14 14-14h83c38 0 69 31 69 69s-31 69-69 69H68c-8 0-14-6-14-14V67Z" fill="#071018" stroke="url(#steel)" stroke-width="10"/>
+  <path d="M78 82h26v26H78V82Zm38 0h26v26h-26V82Zm-38 38h26v26H78v-26Zm38 0h26v26h-26v-26Zm-38 38h26v26H78v-26Z" fill="url(#steel)" opacity=".9"/>
+  <path d="M124 158v-50l45 25-45 25Z" fill="#061017" stroke="#e9fff9" stroke-opacity=".82" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M128 147v-28l25 14-25 14Z" fill="#40e0b7"/>
+</svg>
