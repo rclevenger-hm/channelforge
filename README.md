@@ -1,8 +1,15 @@
 # ChannelForge
 
-ChannelForge is a lightweight browser IPTV player for user-provided legal M3U playlists.
+ChannelForge is a lightweight, cross-platform IPTV playlist player for user-provided legal M3U sources. It runs as a local web app, can be packaged as native desktop apps for Windows, macOS, and Linux, and includes TV web app scaffolds for Samsung Tizen TV and LG webOS TV.
 
-This public edition intentionally ships without bundled playlist sources, scraper integrations, provider-specific endpoints, login gates, or stream-discovery tooling. It is meant to be a clean player shell for playlists you own or are authorized to access.
+This public edition intentionally ships without bundled playlist sources, scraper integrations, provider-specific endpoints, login gates, or stream-discovery tooling. It is meant to be a clean player shell for playlists you own or are authorized to access across web, desktop, and TV packaging targets.
+
+## Targets
+
+- Local web app served by Node.js.
+- Dockerized web app deployment.
+- Electron desktop apps for Windows, macOS, and Linux.
+- Samsung Tizen TV and LG webOS TV web app scaffolds.
 
 ## Run Locally
 
@@ -101,7 +108,7 @@ npm test
 - Deduplicate channels by stream URL.
 - Search and filter by group.
 - Play direct video URLs and HLS streams with HLS.js when needed.
-- Store loaded channels and favorites locally in the browser.
+- Store loaded channels and favorites locally in the app runtime.
 - Package as Windows, macOS, and Linux desktop apps with Electron.
 - Generate Samsung Tizen and LG webOS TV app scaffolds.
 
