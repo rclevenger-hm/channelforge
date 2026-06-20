@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 
 const files = {
+  desktopWorkflow: await readFile(".github/workflows/desktop-build.yml", "utf8"),
+  electronMain: await readFile("electron/main.cjs", "utf8"),
   html: await readFile("index.html", "utf8"),
   readme: await readFile("README.md", "utf8"),
   server: await readFile("app.js", "utf8"),
@@ -15,12 +17,21 @@ function assert(condition, message) {
 
 assert(files.html.includes("client.js"), "index should load client.js");
 assert(files.packageJson.scripts?.start === "node app.js", "start script should run the server entry");
+assert(files.packageJson.scripts?.desktop === "electron .", "desktop script should run Electron");
+assert(files.packageJson.scripts?.dist === "electron-builder", "dist script should package desktop builds");
+assert(files.packageJson.devDependencies?.electron, "Electron should be available for desktop app builds");
+assert(files.packageJson.devDependencies?.["electron-builder"], "electron-builder should be available for installers");
+assert(files.packageJson.main === "electron/main.cjs", "package main should point to Electron entry");
 assert(files.server.includes("/healthz"), "server should expose health endpoint");
+assert(files.electronMain.includes("BrowserWindow"), "Electron entry should create a desktop window");
+assert(files.electronMain.includes("nodeIntegration: false"), "Electron entry should disable nodeIntegration");
+assert(files.desktopWorkflow.includes("windows-latest") && files.desktopWorkflow.includes("macos-latest"), "desktop workflow should build Windows and macOS artifacts");
 assert(files.client.includes("playlistUrl"), "client should support user-provided playlist URLs");
 assert(files.client.includes("playlistText"), "client should support pasted M3U text");
 assert(files.client.includes("parseM3u"), "client should parse M3U text");
 assert(files.client.includes("Hls"), "client should use HLS.js for HLS playback");
 assert(files.readme.includes("without bundled playlist sources"), "README should describe public-safe source policy");
+assert(files.readme.includes("Desktop Apps"), "README should document desktop app packaging");
 
 for (const forbidden of ["NasiLemakk", "BuddyChewChew", "apsattv", "Tubi", "Xtream", "FastChannels", "CHANNELFORGE_TOTP_SECRET", "CHANNELFORGE_PASSWORD", "/playlist", "/metadata", "/tubi"]) {
   assert(!files.client.includes(forbidden), `client should not include private feature/reference: ${forbidden}`);

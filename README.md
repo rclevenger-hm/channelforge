@@ -23,6 +23,37 @@ docker build -t channelforge .
 docker run --rm -p 5173:5173 channelforge
 ```
 
+## Desktop Apps
+
+ChannelForge can be packaged as a native desktop-style app for Windows and macOS using Electron.
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Run the desktop app locally:
+
+```powershell
+npm run desktop
+```
+
+Build installers on the current platform:
+
+```powershell
+npm run dist
+```
+
+Platform-specific build scripts are also available:
+
+```powershell
+npm run dist:win
+npm run dist:mac
+```
+
+The public repo includes a GitHub Actions workflow at `.github/workflows/desktop-build.yml` that can build Windows and macOS artifacts when manually triggered or when a `v*` tag is pushed.
+
 ## Test
 
 ```powershell
@@ -38,6 +69,7 @@ npm test
 - Search and filter by group.
 - Play direct video URLs and HLS streams with HLS.js when needed.
 - Store loaded channels and favorites locally in the browser.
+- Package as Windows and macOS desktop apps with Electron.
 
 ## Legal
 

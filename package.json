@@ -4,11 +4,46 @@
   "private": false,
   "description": "A browser-based IPTV playlist player for user-provided legal M3U sources.",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
+    "desktop": "electron .",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
     "start": "node app.js",
-    "test": "node --check client.js && node --check app.js && node tests/smoke.mjs"
+    "test": "node --check client.js && node --check app.js && node --check electron/main.cjs && node tests/smoke.mjs"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "cloud.channelforge.player",
+    "productName": "ChannelForge",
+    "files": [
+      "app.js",
+      "channel-forge-icon.svg",
+      "client.js",
+      "electron/**/*",
+      "index.html",
+      "package.json",
+      "styles.css"
+    ],
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    }
   }
 }
