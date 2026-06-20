@@ -25,7 +25,7 @@ docker run --rm -p 5173:5173 channelforge
 
 ## Desktop Apps
 
-ChannelForge can be packaged as a native desktop-style app for Windows and macOS using Electron.
+ChannelForge can be packaged as a native desktop-style app for Windows, macOS, and Linux using Electron.
 
 Install dependencies:
 
@@ -50,9 +50,10 @@ Platform-specific build scripts are also available:
 ```powershell
 npm run dist:win
 npm run dist:mac
+npm run dist:linux
 ```
 
-The public repo includes a GitHub Actions workflow at `.github/workflows/desktop-build.yml` that can build Windows and macOS artifacts when manually triggered or when a `v*` tag is pushed.
+The public repo includes a GitHub Actions workflow at `.github/workflows/desktop-build.yml` that can build Windows, macOS, and Linux artifacts when manually triggered or when a `v*` tag is pushed.
 
 ## TV App Packages
 
@@ -92,7 +93,7 @@ npm test
 - Search and filter by group.
 - Play direct video URLs and HLS streams with HLS.js when needed.
 - Store loaded channels and favorites locally in the browser.
-- Package as Windows and macOS desktop apps with Electron.
+- Package as Windows, macOS, and Linux desktop apps with Electron.
 - Generate Samsung Tizen and LG webOS TV app scaffolds.
 
 ## Legal

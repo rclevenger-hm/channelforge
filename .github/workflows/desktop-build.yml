@@ -16,6 +16,7 @@ jobs:
         os:
           - windows-latest
           - macos-latest
+          - ubuntu-latest
 
     steps:
       - name: Checkout
@@ -41,7 +42,10 @@ jobs:
           name: channelforge-${{ matrix.os }}
           path: |
             dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb
             dist/*.exe
+            dist/*.tar.gz
             dist/*.zip
             dist/*.blockmap
           if-no-files-found: error
