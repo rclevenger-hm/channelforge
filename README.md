@@ -53,7 +53,16 @@ npm run dist:mac
 npm run dist:linux
 ```
 
-The public repo includes a GitHub Actions workflow at `.github/workflows/desktop-build.yml` that can build Windows, macOS, and Linux artifacts when manually triggered or when a `v*` tag is pushed.
+The public repo includes a GitHub Actions workflow at `.github/workflows/desktop-build.yml` that can build Windows, macOS, and Linux artifacts when manually triggered.
+
+Pushing a version tag also creates a GitHub Release and attaches the generated installers:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Release assets include Windows installer/zip, macOS dmg/zip, and Linux AppImage/deb/tar.gz builds.
 
 ## TV App Packages
 

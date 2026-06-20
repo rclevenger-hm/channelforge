@@ -25,6 +25,7 @@
   "build": {
     "appId": "cloud.channelforge.player",
     "productName": "ChannelForge",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "files": [
       "app.js",
       "channel-forge-icon.svg",
