@@ -3,6 +3,19 @@
   "version": "1.0.0",
   "private": false,
   "description": "A browser-based IPTV playlist player for user-provided legal M3U sources.",
+  "author": {
+    "name": "rclevenger-hm",
+    "email": "rclevenger-hm@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/rclevenger-hm/channelforge#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rclevenger-hm/channelforge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rclevenger-hm/channelforge/issues"
+  },
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -50,6 +63,10 @@
     },
     "linux": {
       "category": "AudioVideo;Player;",
+      "description": "A browser-based IPTV playlist player for user-provided legal M3U sources.",
+      "maintainer": "rclevenger-hm <rclevenger-hm@users.noreply.github.com>",
+      "synopsis": "Bring-your-own IPTV playlist player.",
+      "vendor": "rclevenger-hm",
       "target": [
         "AppImage",
         "deb",

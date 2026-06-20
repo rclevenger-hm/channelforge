@@ -31,6 +31,9 @@ assert(files.packageJson.scripts?.["tv:package"] === "node scripts/build-tv-pack
 assert(files.packageJson.devDependencies?.electron, "Electron should be available for desktop app builds");
 assert(files.packageJson.devDependencies?.["electron-builder"], "electron-builder should be available for installers");
 assert(files.packageJson.main === "electron/main.cjs", "package main should point to Electron entry");
+assert(files.packageJson.author?.email, "package metadata should include an author email for Linux package maintainers");
+assert(files.packageJson.homepage?.startsWith("https://"), "package metadata should include a project homepage for Linux packages");
+assert(files.packageJson.build?.linux?.maintainer?.includes("<"), "Linux package metadata should include a maintainer email");
 assert(files.server.includes("/healthz"), "server should expose health endpoint");
 assert(files.electronMain.includes("BrowserWindow"), "Electron entry should create a desktop window");
 assert(files.electronMain.includes("nodeIntegration: false"), "Electron entry should disable nodeIntegration");
