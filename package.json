@@ -25,7 +25,7 @@
     "dist:mac": "electron-builder --mac --publish never",
     "dist:win": "electron-builder --win --publish never",
     "start": "node app.js",
-    "test": "node --check client.js && node --check app.js && node --check electron/main.cjs && node --check scripts/build-tv-packages.mjs && node tests/electron-security.mjs && node tests/smoke.mjs",
+    "test": "node --check client.js && node --check app.js && node --check electron/main.cjs && node --check scripts/build-tv-packages.mjs && node tests/electron-security.mjs && node tests/http-server.mjs && node tests/smoke.mjs",
     "tv:package": "node scripts/build-tv-packages.mjs"
   },
   "engines": {

@@ -16,7 +16,14 @@ const contentTypes = {
 };
 
 createServer(async (request, response) => {
-  const requestUrl = new URL(request.url || "/", `http://${request.headers.host}`);
+  let requestUrl;
+  try {
+    requestUrl = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
+  } catch {
+    send(response, 400, "Bad request");
+    return;
+  }
+
   if (requestUrl.pathname === "/healthz") {
     sendJson(response, 200, { ok: true, service: "ChannelForge" });
     return;
@@ -27,7 +34,14 @@ createServer(async (request, response) => {
 });
 
 async function serveStatic(requestUrl, response) {
-  const pathname = requestUrl.pathname === "/" ? "/index.html" : decodeURIComponent(requestUrl.pathname);
+  let pathname;
+  try {
+    pathname = requestUrl.pathname === "/" ? "/index.html" : decodeURIComponent(requestUrl.pathname);
+  } catch {
+    send(response, 400, "Bad request");
+    return;
+  }
+
   const resolved = normalize(join(root, pathname));
   if (!resolved.startsWith(root)) {
     send(response, 403, "Forbidden");
