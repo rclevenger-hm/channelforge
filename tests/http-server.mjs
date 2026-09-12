@@ -7,13 +7,13 @@ const child = spawn(process.execPath, ["app.js"], {
   stdio: ["ignore", "pipe", "pipe"],
 });
 
-function request(path) {
+function request(path, method = "GET") {
   return new Promise((resolve, reject) => {
-    const req = http.request({ host: "127.0.0.1", port, path, method: "GET" }, (res) => {
+    const req = http.request({ host: "127.0.0.1", port, path, method }, (res) => {
       let body = "";
       res.setEncoding("utf8");
       res.on("data", (chunk) => { body += chunk; });
-      res.on("end", () => resolve({ status: res.statusCode, body }));
+      res.on("end", () => resolve({ status: res.statusCode, body, headers: res.headers }));
     });
     req.on("error", reject);
     req.end();
@@ -40,6 +40,16 @@ try {
   const health = await request("/healthz");
   if (health.status !== 200 || !health.body.includes('"ok":true')) {
     throw new Error(`health endpoint failed: ${health.status} ${health.body}`);
+  }
+
+  const head = await request("/healthz", "HEAD");
+  if (head.status !== 200 || head.body !== "") {
+    throw new Error(`HEAD health check should be bodyless: ${head.status} ${head.body}`);
+  }
+
+  const post = await request("/healthz", "POST");
+  if (post.status !== 405 || post.headers.allow !== "GET, HEAD") {
+    throw new Error(`unsupported HTTP method should return 405 with Allow header: ${post.status}`);
   }
 
   const malformed = await request("/%E0%A4%A");
