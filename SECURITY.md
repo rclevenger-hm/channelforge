@@ -20,11 +20,12 @@ M3U metadata can contain arbitrary channel names, groups, logos, and media URLs.
 
 - never evaluate playlist fields as JavaScript or HTML;
 - prefer DOM text properties over HTML injection for labels;
-- allow only intended URL schemes for media/logo/external navigation;
+- accept user-entered playlist URLs only over HTTP(S);
+- accept parsed channel/media URLs only over HTTP(S);
 - do not send local files, credentials, cookies, or machine identifiers to playlist hosts;
 - do not automatically follow provider login flows or execute code supplied by a playlist.
 
-A valid M3U file is not proof that every referenced URL is trustworthy or authorized.
+A valid M3U file is not proof that every referenced URL is trustworthy or authorized. Expanding accepted schemes beyond HTTP(S) is a security-significant change because desktop runtimes can expose capabilities that do not exist on an ordinary hosted web page.
 
 ## Web/server boundary
 
