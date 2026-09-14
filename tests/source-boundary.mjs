@@ -16,6 +16,14 @@ assert(
   "parsed M3U channel URLs must remain restricted to HTTP(S)",
 );
 assert(
+  client.includes('logo: safeHttpUrl(attrs["tvg-logo"] || "")'),
+  "playlist-provided logo URLs must pass through the HTTP(S) scheme boundary",
+);
+assert(
+  client.includes('url.protocol !== "http:" && url.protocol !== "https:"'),
+  "logo URL normalization must reject non-HTTP(S) schemes",
+);
+assert(
   !client.includes('file://') && !client.includes('javascript:'),
   "client must not add local-file or executable URL schemes",
 );
