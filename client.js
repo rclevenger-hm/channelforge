@@ -82,7 +82,7 @@ function parseM3u(text) {
         id: "",
         name: cleanName(line.split(",").pop() || attrs["tvg-name"] || "Untitled"),
         group: cleanName(attrs["group-title"] || "Ungrouped"),
-        logo: attrs["tvg-logo"] || "",
+        logo: safeHttpUrl(attrs["tvg-logo"] || ""),
         tvgId: attrs["tvg-id"] || "",
         url: "",
       };
@@ -260,6 +260,16 @@ function normalizeUrl(value = "") {
     return url.toString();
   } catch {
     return String(value).trim();
+  }
+}
+
+function safeHttpUrl(value = "") {
+  try {
+    const url = new URL(String(value).trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    return url.toString();
+  } catch {
+    return "";
   }
 }
 
