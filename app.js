@@ -15,15 +15,23 @@ const contentTypes = {
   ".svg": "image/svg+xml",
 };
 
+function responseHeaders(contentType, extra = {}) {
+  return {
+    "cache-control": "no-store",
+    "content-type": contentType,
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff",
+    ...extra,
+  };
+}
+
 createServer(async (request, response) => {
   const method = request.method || "GET";
   const headOnly = method === "HEAD";
   if (method !== "GET" && !headOnly) {
-    response.writeHead(405, {
+    response.writeHead(405, responseHeaders("text/plain; charset=utf-8", {
       "allow": "GET, HEAD",
-      "cache-control": "no-store",
-      "content-type": "text/plain; charset=utf-8",
-    });
+    }));
     response.end("Method not allowed");
     return;
   }
@@ -62,10 +70,7 @@ async function serveStatic(requestUrl, response, headOnly = false) {
 
   try {
     const body = await readFile(resolved);
-    response.writeHead(200, {
-      "cache-control": "no-store",
-      "content-type": contentTypes[extname(resolved)] || "application/octet-stream",
-    });
+    response.writeHead(200, responseHeaders(contentTypes[extname(resolved)] || "application/octet-stream"));
     response.end(headOnly ? undefined : body);
   } catch {
     send(response, 404, "Not found", headOnly);
@@ -73,17 +78,11 @@ async function serveStatic(requestUrl, response, headOnly = false) {
 }
 
 function send(response, status, body, headOnly = false) {
-  response.writeHead(status, {
-    "cache-control": "no-store",
-    "content-type": "text/plain; charset=utf-8",
-  });
+  response.writeHead(status, responseHeaders("text/plain; charset=utf-8"));
   response.end(headOnly ? undefined : body);
 }
 
 function sendJson(response, status, body, headOnly = false) {
-  response.writeHead(status, {
-    "cache-control": "no-store",
-    "content-type": "application/json; charset=utf-8",
-  });
+  response.writeHead(status, responseHeaders("application/json; charset=utf-8"));
   response.end(headOnly ? undefined : JSON.stringify(body));
 }
