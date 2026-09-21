@@ -1,5 +1,7 @@
 const STORAGE_KEY = "channelforge.public.channels.v1";
 const FAVORITES_KEY = "channelforge.public.favorites.v1";
+const PLAYLIST_FETCH_TIMEOUT_MS = 10_000;
+const MAX_PLAYLIST_BYTES = 5 * 1024 * 1024;
 
 const state = {
   channels: [],
@@ -54,13 +56,66 @@ function bindEvents() {
   });
 }
 
+async function fetchPlaylistText(url) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), PLAYLIST_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`Playlist returned ${response.status}`);
+
+    const declaredLength = Number.parseInt(response.headers.get("content-length") || "", 10);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_PLAYLIST_BYTES) {
+      throw new Error(`Playlist exceeds ${MAX_PLAYLIST_BYTES} byte limit`);
+    }
+
+    if (!response.body?.getReader) {
+      const text = await response.text();
+      if (new TextEncoder().encode(text).byteLength > MAX_PLAYLIST_BYTES) {
+        throw new Error(`Playlist exceeds ${MAX_PLAYLIST_BYTES} byte limit`);
+      }
+      return text;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let bytesRead = 0;
+    let text = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytesRead += value.byteLength;
+        if (bytesRead > MAX_PLAYLIST_BYTES) {
+          await reader.cancel();
+          throw new Error(`Playlist exceeds ${MAX_PLAYLIST_BYTES} byte limit`);
+        }
+        text += decoder.decode(value, { stream: true });
+      }
+      text += decoder.decode();
+      return text;
+    } finally {
+      reader.releaseLock();
+    }
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`Playlist request timed out after ${PLAYLIST_FETCH_TIMEOUT_MS / 1000} seconds`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function loadPlaylist() {
   const pasted = els.playlistText.value.trim();
   let text = pasted;
   if (!text && els.playlistUrl.value.trim()) {
-    const response = await fetch(els.playlistUrl.value.trim(), { cache: "no-store" });
-    if (!response.ok) throw new Error(`Playlist returned ${response.status}`);
-    text = await response.text();
+    text = await fetchPlaylistText(els.playlistUrl.value.trim());
   }
   if (!text) return;
   state.channels = dedupeChannels(parseM3u(text));
