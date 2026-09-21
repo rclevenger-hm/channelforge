@@ -24,6 +24,22 @@ assert(
   "logo URL normalization must reject non-HTTP(S) schemes",
 );
 assert(
+  client.includes("PLAYLIST_FETCH_TIMEOUT_MS") && client.includes("AbortController"),
+  "remote playlist retrieval must have an abortable timeout boundary",
+);
+assert(
+  client.includes("MAX_PLAYLIST_BYTES") && client.includes('response.headers.get("content-length")'),
+  "remote playlist retrieval must reject oversized declared responses",
+);
+assert(
+  client.includes("response.body.getReader()") && client.includes("bytesRead > MAX_PLAYLIST_BYTES"),
+  "remote playlist retrieval must enforce the size limit while streaming unknown-length responses",
+);
+assert(
+  client.includes("await reader.cancel()"),
+  "oversized streaming responses must be cancelled instead of continuing to download",
+);
+assert(
   !client.includes('file://') && !client.includes('javascript:'),
   "client must not add local-file or executable URL schemes",
 );
