@@ -100,6 +100,12 @@ Samsung and LG app store submission still requires their respective developer ac
 npm test
 ```
 
+## Playlist Reliability
+
+Remote playlist loading is an external dependency boundary. ChannelForge bounds that path with a 10-second request timeout and a 5 MiB response limit, including streaming responses whose final size is not known in advance. Oversized streams are cancelled instead of being downloaded completely.
+
+A failed remote import should not be treated as an empty successful playlist. The existing channel state remains the last usable state until a playlist has been retrieved and parsed successfully. The next network-test slice should exercise timeouts, partial responses, oversized streaming bodies, and successful retry behavior against a local test server.
+
 ## Features
 
 - Load a CORS-accessible M3U playlist URL.
