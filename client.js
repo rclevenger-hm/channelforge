@@ -102,6 +102,9 @@ async function fetchPlaylistText(url) {
       reader.releaseLock();
     }
   } catch (error) {
+    // Rejecting response headers does not stop fetch from downloading the body.
+    // Abort before clearing the deadline so failed loads cannot keep streaming.
+    controller.abort();
     if (error?.name === "AbortError") {
       throw new Error(`Playlist request timed out after ${PLAYLIST_FETCH_TIMEOUT_MS / 1000} seconds`);
     }
