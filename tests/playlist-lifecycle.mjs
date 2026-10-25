@@ -50,6 +50,9 @@ function client() {
   });
   vm.runInContext(source, context);
   elements.get("#channelTemplate").content = { firstElementChild: element() };
+  Object.defineProperty(elements.get("#groupFilter"), "innerHTML", {
+    set() { this.value = "all"; },
+  });
   elements.get("#groupFilter").value = "all";
   return {
     elements, storage, requests, video,
@@ -188,4 +191,16 @@ test("failed persistence preserves existing channels, storage and playback", asy
   assert.equal(app.elements.get("#nowPlaying").textContent, "Existing");
   assert.equal(app.elements.get("#emptyPlayer").hidden, true);
   assert.equal(app.run("state.playlistLoad"), null);
+});
+
+test("empty and cleared search shows loaded channels rather than filtering for Untitled", async () => {
+  const app = client();
+  await app.paste("Existing");
+  assert.equal(app.run("state.filtered.length"), 1);
+  app.elements.get("#searchInput").value = "missing";
+  app.elements.get("#searchInput").events.input();
+  assert.equal(app.run("state.filtered.length"), 0);
+  app.elements.get("#searchInput").value = "   ";
+  app.elements.get("#searchInput").events.input();
+  assert.equal(app.run("state.filtered.length"), 1);
 });

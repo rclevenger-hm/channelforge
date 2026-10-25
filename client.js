@@ -350,7 +350,7 @@ function cleanName(value = "") {
 }
 
 function normalizeName(value = "") {
-  return cleanName(value).toLowerCase();
+  return decodeEntities(value).replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function normalizeUrl(value = "") {
