@@ -177,6 +177,41 @@ test("deadlines abort both stalled headers and stalled response bodies", async (
   }
 });
 
+test("caller cancellation aborts stalled headers and bodies without reporting a timeout", async () => {
+  for (const sendHeaders of [false, true]) {
+    let received;
+    const ready = new Promise((resolve) => { received = resolve; });
+    await withServer((_request, response) => {
+      if (sendHeaders) {
+        response.writeHead(200);
+        response.write("#EXTM3U\n");
+      }
+      received();
+    }, async (url) => {
+      let headersReceived;
+      const headersReady = new Promise((resolve) => { headersReceived = resolve; });
+      const app = client(async (...args) => {
+        const response = await fetch(...args);
+        headersReceived();
+        return response;
+      });
+      const controller = new AbortController();
+      const pending = app.load(url, controller.signal);
+      const rejection = assert.rejects(pending, { name: "AbortError" });
+      await ready;
+      if (sendHeaders) {
+        await headersReady;
+        // Abort after the real fetch has started consuming the stalled body.
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      controller.abort();
+      await rejection;
+      assert.equal(app.requests[0].signal.aborted, true);
+      assert.equal(app.timers.size, 0);
+    });
+  }
+});
+
 test("truncated HTTP bodies fail rather than returning partial playlist text", async () => {
   await withServer((_request, response) => {
     response.writeHead(200, { "content-length": "1000" });

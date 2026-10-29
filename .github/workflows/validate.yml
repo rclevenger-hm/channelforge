@@ -10,6 +10,7 @@ permissions:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,5 +21,11 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Run runtime and packaging smoke tests
         run: npm test
+      - name: Install browser test runtime
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test playlist lifecycle in Chromium
+        run: node tests/playlist-browser.cjs
       - name: Build container image
         run: docker build --tag channelforge:pr .

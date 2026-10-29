@@ -10,6 +10,7 @@ const state = {
   favoritesOnly: false,
   favorites: new Set(readJson(FAVORITES_KEY, [])),
   hls: null,
+  playlistLoad: null,
 };
 
 const els = {
@@ -49,16 +50,24 @@ function bindEvents() {
     renderChannelList();
   });
   els.clearData.addEventListener("click", () => {
+    cancelPlaylistLoad();
+    stopPlayback();
     state.channels = [];
-    state.selectedId = "";
     localStorage.removeItem(STORAGE_KEY);
     renderAll();
   });
 }
 
-async function fetchPlaylistText(url) {
+async function fetchPlaylistText(url, signal) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PLAYLIST_FETCH_TIMEOUT_MS);
+  const cancel = () => controller.abort();
+  signal?.addEventListener("abort", cancel, { once: true });
+  if (signal?.aborted) cancel();
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, PLAYLIST_FETCH_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
@@ -105,25 +114,58 @@ async function fetchPlaylistText(url) {
     // Rejecting response headers does not stop fetch from downloading the body.
     // Abort before clearing the deadline so failed loads cannot keep streaming.
     controller.abort();
-    if (error?.name === "AbortError") {
+    if (error?.name === "AbortError" && timedOut) {
       throw new Error(`Playlist request timed out after ${PLAYLIST_FETCH_TIMEOUT_MS / 1000} seconds`);
     }
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", cancel);
   }
 }
 
+function cancelPlaylistLoad() {
+  state.playlistLoad?.abort();
+  state.playlistLoad = null;
+}
+
 async function loadPlaylist() {
-  const pasted = els.playlistText.value.trim();
-  let text = pasted;
-  if (!text && els.playlistUrl.value.trim()) {
-    text = await fetchPlaylistText(els.playlistUrl.value.trim());
+  cancelPlaylistLoad();
+  const load = new AbortController();
+  state.playlistLoad = load;
+  try {
+    const pasted = els.playlistText.value.trim();
+    let text = pasted;
+    if (!text && els.playlistUrl.value.trim()) {
+      text = await fetchPlaylistText(els.playlistUrl.value.trim(), load.signal);
+    }
+    // Cancellation can race with a response that has already completed. Only
+    // the latest load may persist channels, even if fetch ignores the abort.
+    if (state.playlistLoad !== load || !text) return;
+    const channels = dedupeChannels(parseM3u(text));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(channels));
+    stopPlayback();
+    state.channels = channels;
+    renderAll();
+  } catch (error) {
+    if (state.playlistLoad !== load) return;
+    throw error;
+  } finally {
+    if (state.playlistLoad === load) state.playlistLoad = null;
   }
-  if (!text) return;
-  state.channels = dedupeChannels(parseM3u(text));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.channels));
-  renderAll();
+}
+
+function stopPlayback() {
+  if (state.hls) {
+    state.hls.destroy();
+    state.hls = null;
+  }
+  els.videoPlayer.pause();
+  els.videoPlayer.removeAttribute("src");
+  els.videoPlayer.load();
+  state.selectedId = "";
+  els.nowPlaying.textContent = "Nothing selected";
+  els.emptyPlayer.hidden = false;
 }
 
 function parseM3u(text) {
@@ -308,7 +350,7 @@ function cleanName(value = "") {
 }
 
 function normalizeName(value = "") {
-  return cleanName(value).toLowerCase();
+  return decodeEntities(value).replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function normalizeUrl(value = "") {
