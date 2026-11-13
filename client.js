@@ -10,6 +10,7 @@ const state = {
   favoritesOnly: false,
   favorites: new Set(readJson(FAVORITES_KEY, [])),
   hls: null,
+  playbackGeneration: 0,
   playlistLoad: null,
 };
 
@@ -156,6 +157,7 @@ async function loadPlaylist() {
 }
 
 function stopPlayback() {
+  state.playbackGeneration++;
   if (state.hls) {
     state.hls.destroy();
     state.hls = null;
@@ -314,6 +316,7 @@ function selectChannel(id) {
 }
 
 function playUrl(url) {
+  const generation = ++state.playbackGeneration;
   if (state.hls) {
     state.hls.destroy();
     state.hls = null;
@@ -322,9 +325,14 @@ function playUrl(url) {
   els.videoPlayer.removeAttribute("src");
   if (/\.m3u8(?:[?#]|$)/i.test(url) && window.Hls?.isSupported()) {
     state.hls = new window.Hls();
+    // A queued callback from a destroyed player must not resume a newer
+    // selection or a player the user has cleared. Listen before starting HLS.
+    state.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+      if (generation !== state.playbackGeneration) return;
+      els.videoPlayer.play().catch(() => {});
+    });
     state.hls.loadSource(url);
     state.hls.attachMedia(els.videoPlayer);
-    state.hls.on(window.Hls.Events.MANIFEST_PARSED, () => els.videoPlayer.play().catch(() => {}));
     return;
   }
   els.videoPlayer.src = url;

@@ -204,3 +204,58 @@ test("empty and cleared search shows loaded channels rather than filtering for U
   app.elements.get("#searchInput").events.input();
   assert.equal(app.run("state.filtered.length"), 1);
 });
+
+function hlsClient() {
+  const app = client();
+  app.video.playCount = 0;
+  app.video.play = () => { app.video.playCount++; return Promise.resolve(); };
+  app.run(`
+    globalThis.instances = [];
+    window.Hls = class {
+      static Events = { MANIFEST_PARSED: 'manifest' };
+      static isSupported() { return true; }
+      constructor() { this.handlers = {}; instances.push(this); }
+      on(event, callback) { this.handlers[event] = callback; }
+      loadSource(url) { this.url = url; }
+      attachMedia(video) { this.video = video; }
+      destroy() { this.destroyed = true; }
+      manifest() { this.handlers.manifest?.(); }
+    };
+  `);
+  return app;
+}
+
+test("late HLS manifest cannot restart playback after Clear", () => {
+  const app = hlsClient();
+  app.run('playUrl("https://example.com/old.m3u8")');
+  app.clear();
+  app.run('instances[0].manifest()');
+  assert.equal(app.video.playCount, 0);
+  assert.equal(app.video.src, "");
+});
+
+test("old HLS manifests cannot play a newer HLS or direct selection", () => {
+  const app = hlsClient();
+  app.run('playUrl("https://example.com/old.m3u8"); playUrl("https://example.com/new.m3u8")');
+  app.run('instances[0].manifest()');
+  assert.equal(app.video.playCount, 0);
+  app.run('instances[1].manifest()');
+  assert.equal(app.video.playCount, 1);
+  app.run('playUrl("https://example.com/direct.mp4")');
+  assert.equal(app.video.playCount, 2);
+  app.run('instances[0].manifest(); instances[1].manifest()');
+  assert.equal(app.video.playCount, 2);
+  assert.equal(app.video.src, "https://example.com/direct.mp4");
+});
+
+test("HLS callbacks are invalidated before destroying the old player", () => {
+  const app = hlsClient();
+  app.run('playUrl("https://example.com/old.m3u8"); instances[0].destroy = function() { this.manifest(); }; stopPlayback()');
+  assert.equal(app.video.playCount, 0);
+});
+
+test("manifest listener is ready before HLS starts loading or attaching", () => {
+  const app = hlsClient();
+  app.run('window.Hls.prototype.attachMedia = function() { this.manifest(); }; playUrl("https://example.com/live.m3u8")');
+  assert.equal(app.video.playCount, 1);
+});
