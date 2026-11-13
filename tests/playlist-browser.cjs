@@ -28,7 +28,10 @@ const { chromium } = require('playwright');
       window.fetch = (url, options) => String(url).startsWith('https://fixture.test/')
         ? new Promise((resolve, reject) => window.playlistRequests.push({ options, resolve, reject }))
         : realFetch(url, options);
-      HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+      HTMLMediaElement.prototype.play = function () {
+        this.dataset.playCount = String(Number(this.dataset.playCount || 0) + 1);
+        return Promise.resolve();
+      };
       HTMLMediaElement.prototype.pause = function () {};
       HTMLMediaElement.prototype.load = function () { this.dataset.resetCount = String(Number(this.dataset.resetCount || 0) + 1); };
     });
@@ -77,8 +80,37 @@ const { chromium } = require('playwright');
     await page.evaluate(() => playlistRequests[3].reject(new Error('stale request')));
     await page.waitForTimeout(50);
     assert.deepEqual(await names(), ['Pasted']);
+    // Retain callbacks after destroy to model notifications already queued by HLS.
+    await page.evaluate(() => {
+      window.hlsInstances = [];
+      window.Hls = class {
+        static Events = { MANIFEST_PARSED: 'manifest' };
+        static isSupported() { return true; }
+        constructor() { this.handlers = {}; window.hlsInstances.push(this); }
+        on(event, callback) { this.handlers[event] = callback; }
+        loadSource() {}
+        attachMedia() {}
+        destroy() {}
+        manifest() { this.handlers.manifest?.(); }
+      };
+    });
+    await page.locator('#playlistText').fill('#EXTM3U\n#EXTINF:-1,Alpha\nhttps://example.com/alpha.m3u8\n#EXTINF:-1,Beta\nhttps://example.com/beta.m3u8\n');
+    await page.getByRole('button', { name: 'Load Playlist' }).click();
+    const plays = () => page.locator('#videoPlayer').getAttribute('data-play-count');
+    const before = Number(await plays());
+    await page.getByText('Alpha', { exact: true }).click();
+    await page.getByText('Beta', { exact: true }).click();
+    await page.evaluate(() => hlsInstances[0].manifest());
+    assert.equal(Number(await plays()), before);
+    await page.evaluate(() => hlsInstances[1].manifest());
+    assert.equal(Number(await plays()), before + 1);
+    await page.getByRole('button', { name: 'Clear', exact: true }).click();
+    await page.evaluate(() => hlsInstances.forEach(hls => hls.manifest()));
+    assert.equal(Number(await plays()), before + 1);
+    assert.equal(await page.locator('#nowPlaying').textContent(), 'Nothing selected');
+    assert.equal(await page.locator('#videoPlayer').getAttribute('src'), null);
     assert.deepEqual(errors, []);
-    console.log('Chromium playlist overlap, Clear, playback reset and pasted-replacement checks passed.');
+    console.log('Chromium playlist overlap, Clear, playback reset, pasted replacement and stale HLS callback checks passed.');
   } finally {
     if (browser) await browser.close();
     server.closeAllConnections();
