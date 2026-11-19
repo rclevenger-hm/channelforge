@@ -19,6 +19,7 @@ const { chromium } = require('playwright');
   try {
     browser = await chromium.launch();
     const page = await browser.newPage();
+    await page.addInitScript({ path: 'tv/tv-remote.js' });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.route('https://**/*', route => route.abort());
@@ -57,8 +58,74 @@ const { chromium } = require('playwright');
     await page.locator('#searchInput').fill('   ');
     assert.deepEqual(await names(), ['New']);
     assert.deepEqual(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).map(c => c.name), key), ['New']);
-    await page.locator('.channel-row').click();
-    assert.equal(await page.locator('#nowPlaying').textContent(), 'New');
+    await page.evaluate(() => {
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function (...args) {
+        window.playCalls = (window.playCalls ?? 0) + 1;
+        return play.apply(this, args);
+      };
+    });
+    const row = page.locator('.channel-row');
+    const favorite = row.locator('.favorite-star');
+    const favorites = page.locator('#favoritesOnly');
+    const isFocused = (control) => control.evaluate(el => document.activeElement === el);
+
+    await row.focus();
+    for (const key of ['Enter', 'Space', 'Enter']) {
+      const playCalls = await page.evaluate(() => window.playCalls ?? 0);
+      await page.keyboard.press(key);
+      assert.equal(await page.locator('#nowPlaying').textContent(), 'New');
+      assert.equal(await isFocused(row), true, `the row retains focus after ${key}`);
+      assert.equal(await page.evaluate(() => window.playCalls), playCalls + 1, `${key} activates playback only once with TV controls`);
+    }
+    await favorite.focus();
+    await page.keyboard.press('Space');
+    assert.equal(await isFocused(favorite), true);
+    assert.equal(await favorite.getAttribute('aria-pressed'), 'true');
+    await page.keyboard.press('Enter');
+    assert.equal(await isFocused(favorite), true);
+    assert.equal(await favorite.getAttribute('aria-pressed'), 'false');
+    await page.keyboard.press('Space');
+    await favorites.focus();
+    await page.keyboard.press('Space');
+    assert.equal(await isFocused(favorites), true);
+    await favorite.focus();
+    await page.keyboard.press('Space');
+    assert.equal(await row.count(), 0);
+    assert.equal(await isFocused(favorites), true);
+    await page.keyboard.press('Space');
+    assert.equal(await row.count(), 1);
+
+    const search = page.locator('#searchInput');
+    await search.focus();
+    await search.fill('New');
+    assert.equal(await isFocused(search), true);
+    await search.fill('');
+    const group = page.locator('#groupFilter');
+    await group.focus();
+    await group.dispatchEvent('change');
+    assert.equal(await isFocused(group), true);
+    await page.locator('#playlistText').fill('#EXTM3U\n#EXTINF:-1,Alpha\nhttps://example.com/alpha.mp4\n#EXTINF:-1,Beta\nhttps://example.com/beta.mp4\n');
+    await page.getByRole('button', { name: 'Load Playlist' }).click();
+    const alpha = row.filter({ hasText: 'Alpha' });
+    const beta = row.filter({ hasText: 'Beta' });
+    await alpha.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await isFocused(alpha), true);
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await isFocused(beta), true, 'TV ArrowDown moves from the restored row to the next channel');
+    await alpha.locator('.favorite-star').focus();
+    await page.keyboard.press('Space');
+    await beta.locator('.favorite-star').focus();
+    await page.keyboard.press('Space');
+    await favorites.focus();
+    await page.keyboard.press('Space');
+    await alpha.locator('.favorite-star').focus();
+    await page.keyboard.press('Space');
+    assert.deepEqual(await names(), ['Beta']);
+    assert.equal(await isFocused(favorites), true);
+    await page.keyboard.press('Space');
+
     await load('clear', 3);
     await page.getByRole('button', { name: 'Clear', exact: true }).click();
     assert.equal(await page.evaluate(() => playlistRequests[2].options.signal.aborted), true);
