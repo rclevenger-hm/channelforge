@@ -7,6 +7,8 @@
   });
 
   window.addEventListener("keydown", (event) => {
+    // A channel row handles Enter itself and may restore focus during the event.
+    if (event.defaultPrevented) return;
     const key = event.key;
     if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(key)) return;
     const active = document.activeElement;

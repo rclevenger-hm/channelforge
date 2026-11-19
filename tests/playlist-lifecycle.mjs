@@ -11,12 +11,48 @@ function client() {
   const elements = new Map();
   const storage = new Map();
   const requests = [];
+  const document = { activeElement: null };
   const element = () => ({
-    value: "", textContent: "", hidden: false, events: {},
+    attributes: new Map(), children: [], parent: null,
+    contains(other) { return other === this || this.children.some(child => child.contains(other)); },
+    matches(selector) { return selector === ".favorite-star" && this.favorite === true; },
+    closest(selector) {
+      if (selector === ".channel-row" && this.row) return this;
+      if (this.matches(selector)) return this;
+      return this.parent?.closest(selector) ?? null;
+    },
+    focus() { document.activeElement = this; },
+    set textContent(value) {
+      if (this.children.some(child => child.contains(document.activeElement))) document.activeElement = null;
+      this.children = [];
+      this.text = value;
+    },
+    get textContent() { return this.text; },
+    value: "", hidden: false, events: {},
     classList: { toggle() {} },
     addEventListener(name, callback) { this.events[name] = callback; },
-    setAttribute() {}, append() {},
-    querySelector: () => element(), cloneNode: () => element(),
+    setAttribute(name, value) { this.attributes.set(name, value); },
+    getAttribute(name) { return this.attributes.get(name) ?? null; },
+    append(child) {
+      if (child.fragment) {
+        for (const nested of [...child.children]) this.append(nested);
+      } else {
+        child.parent = this;
+        this.children.push(child);
+      }
+    },
+    querySelector(selector) {
+      if (selector === ".favorite-star") return this.children.find(child => child.favorite);
+      return element();
+    },
+    cloneNode() {
+      const row = element();
+      row.row = true;
+      const favorite = element();
+      favorite.favorite = true;
+      row.append(favorite);
+      return row;
+    },
     set innerHTML(value) { this.value = value; },
   });
   const video = element();
@@ -29,14 +65,14 @@ function client() {
   });
   elements.set("#videoPlayer", video);
   const context = vm.createContext({
-    document: {
+    document: Object.assign(document, {
       querySelector(selector) {
         if (!elements.has(selector)) elements.set(selector, element());
         return elements.get(selector);
       },
       createElement: element,
-      createDocumentFragment: element,
-    },
+      createDocumentFragment: () => Object.assign(element(), { fragment: true }),
+    }),
     localStorage: {
       getItem: (name) => storage.get(name) ?? null,
       setItem: (name, value) => storage.set(name, value),
@@ -55,7 +91,7 @@ function client() {
   });
   elements.get("#groupFilter").value = "all";
   return {
-    elements, storage, requests, video,
+    document, elements, storage, requests, video,
     run: (code) => vm.runInContext(code, context),
     load(name) {
       elements.get("#playlistText").value = "";
@@ -73,6 +109,70 @@ function client() {
 }
 
 function finish(request, name) { request.resolve(new Response(playlist(name))); }
+
+test("keyboard selection restores focus to the selected channel without stealing search focus", async () => {
+  const app = client();
+  await app.paste("Alpha");
+  const list = app.elements.get("#channelList");
+  const original = list.children[0];
+  original.focus();
+  original.events.keydown({ target: original, key: "Enter", preventDefault() {} });
+  assert.notEqual(list.children[0], original);
+  assert.equal(app.document.activeElement, list.children[0]);
+  const search = app.elements.get("#searchInput");
+  search.focus();
+  search.events.input();
+  assert.equal(app.document.activeElement, search);
+});
+
+test("favorite activation restores its button or moves to Favorites when its row is removed", async () => {
+  const app = client();
+  await app.paste("Alpha");
+  const list = app.elements.get("#channelList");
+  const favorites = app.elements.get("#favoritesOnly");
+  const button = () => list.children[0].querySelector(".favorite-star");
+  const activate = () => {
+    const focused = button();
+    focused.focus();
+    focused.events.click({ stopPropagation() {} });
+  };
+
+  const original = button();
+  activate();
+  assert.notEqual(original, button());
+  assert.equal(app.document.activeElement, button());
+  favorites.focus();
+  favorites.events.click();
+  assert.equal(app.document.activeElement, favorites);
+  activate();
+  assert.equal(app.document.activeElement, favorites);
+  assert.equal(list.children[0].textContent, "No channels match the current filters.");
+});
+
+test("unfavoriting a focused row keeps other favorites and returns focus to the filter", async () => {
+  const app = client();
+  app.elements.get("#playlistText").value = playlist("Alpha") + playlist("Beta");
+  await app.run("loadPlaylist()");
+  const list = app.elements.get("#channelList");
+  const favorites = app.elements.get("#favoritesOnly");
+  const toggle = (index) => {
+    const button = list.children[index].querySelector(".favorite-star");
+    button.focus();
+    button.events.click({ stopPropagation() {} });
+  };
+
+  toggle(0);
+  toggle(1);
+  favorites.focus();
+  favorites.events.click();
+  assert.equal(list.children.length, 2);
+  const remainingId = list.children[1].getAttribute("data-channel-id");
+  toggle(0);
+  assert.equal(list.children.length, 1);
+  assert.equal(list.children[0].querySelector(".favorite-star").getAttribute("aria-label"), "Remove Beta from favorites");
+  assert.equal(list.children[0].getAttribute("data-channel-id"), remainingId);
+  assert.equal(app.document.activeElement, favorites);
+});
 
 test("newer remote loads win even when an older fetch ignores cancellation", async () => {
   const app = client();

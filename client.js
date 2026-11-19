@@ -235,6 +235,12 @@ function renderGroups() {
 }
 
 function renderChannelList() {
+  const active = document.activeElement;
+  const focusedRow = active?.closest(".channel-row");
+  const focusedId = focusedRow && els.channelList.contains(focusedRow)
+    ? focusedRow.getAttribute("data-channel-id")
+    : null;
+  const focusedFavorite = focusedId && active.matches(".favorite-star");
   const query = normalizeName(els.searchInput.value);
   const group = els.groupFilter.value;
   state.filtered = state.channels.filter((channel) => {
@@ -251,12 +257,19 @@ function renderChannelList() {
     empty.className = "empty-list";
     empty.textContent = state.channels.length ? "No channels match the current filters." : "Load a legal M3U playlist to begin.";
     els.channelList.append(empty);
+    if (focusedId) els.favoritesOnly.focus();
     return;
   }
 
   const fragment = document.createDocumentFragment();
-  for (const channel of state.filtered.slice(0, 1000)) fragment.append(createChannelRow(channel));
+  let focusTarget;
+  for (const channel of state.filtered.slice(0, 1000)) {
+    const row = createChannelRow(channel);
+    if (channel.id === focusedId) focusTarget = focusedFavorite ? row.querySelector(".favorite-star") : row;
+    fragment.append(row);
+  }
   els.channelList.append(fragment);
+  if (focusedId) (focusTarget ?? els.favoritesOnly).focus();
 }
 
 function createChannelRow(channel) {
@@ -266,6 +279,7 @@ function createChannelRow(channel) {
   const meta = row.querySelector(".channel-copy small");
   const favorite = row.querySelector(".favorite-star");
 
+  row.setAttribute("data-channel-id", channel.id);
   row.classList.toggle("is-active", channel.id === state.selectedId);
   row.classList.toggle("is-favorite", state.favorites.has(channel.id));
   logo.textContent = initials(channel.name);
